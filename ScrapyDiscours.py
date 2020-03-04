@@ -62,7 +62,7 @@ class DiscoursScrapper(scrapy.Spider):
         yield {
             'Id':unique_id.encode("utf-8") ,
             'Titre':titre.encode("utf-8") ,
-            'Type':titre.split(' ')[0].lower.encode('utf-8'),
+            'Type':titre.split(' ')[0].lower().encode('utf-8'),
             'Theme':themes,
             'Prenom':prenom.encode("utf-8") ,
             'Nom':nom,
