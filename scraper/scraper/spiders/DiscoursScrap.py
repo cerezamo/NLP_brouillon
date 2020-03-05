@@ -77,7 +77,7 @@ class DiscoursScrapper(scrapy.Spider):
             'Nom':nom,
             'Fonction':fonction.encode("utf-8") ,
             'Date':dt.encode("utf-8") ,
-            'Tags':tags ,
+            'Tags':tags,
             'Texte': text.encode("utf-8") ,
             'Lien':response.request.url
         }
