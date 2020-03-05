@@ -46,6 +46,15 @@ class DiscoursScrapper(scrapy.Spider):
             themes = response.xpath('//*[@id="block-ldf-content"]/div/div[1]/div[1]/div/div/div[2]/div/div/ul/li/text()').extract()
         else:
             themes= ''
+        if titre =='':
+            try:
+                if response.xpath('//*[@id="block-ldf-content"]/div/div[1]/div[1]/div/div/div[1]/p[1]/span/time/text()').extract_first():
+                    dat = response.xpath('//*[@id="block-ldf-content"]/div/div[1]/div[1]/div/div/div[1]/p[1]/span/time/text()').extract_first()
+                    titre = ''.join(titre[0][titre[0].find(prenomnom[0])+len(prenomnom[0])+2:titre[0].find(dat)].split(',')[:-1]).capitalize()
+                else:
+                    titre=''
+            except:
+                titre = ''
         if response.css('span.field--name-field-texte-integral'):
             text = response.css('span.field--name-field-texte-integral').extract()[0]
             para = text.split('\n')
