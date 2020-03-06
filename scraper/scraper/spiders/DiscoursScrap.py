@@ -1,5 +1,6 @@
 import scrapy
 from bs4 import BeautifulSoup
+import re
 class DiscoursScrapper(scrapy.Spider):
     name = 'discours'
     def start_requests(self):
@@ -12,13 +13,14 @@ class DiscoursScrapper(scrapy.Spider):
                 link = 'https://www.vie-publique.fr'+link[0]
                 rq = response.follow(link,callback=self.get_discours)
                 yield rq
-        if int(response.request.url.split('=')[1]) < 11636:
+        if int(response.request.url.split('=')[1]) < 2:
             lien = 'https://www.vie-publique.fr/discours?page='+str(int(response.request.url.split('=')[1])+1)
             yield scrapy.Request(url = lien,callback=self.get_all_discours)
     def get_discours(self,response):
         titre = response.xpath('//*[@id="block-ldf-content"]/div/div[1]/div[1]/div/div/h1/text()').extract()
         if titre:
             titre = titre[0].replace('\n','')
+            titre = re.sub('  +', '',titre)
         else:
             titre = ''
         prenomnom= response.xpath('//*[@id="block-ldf-content"]/div/div[1]/div[1]/div/div/div[2]/ul/li[1]/a/text()').extract()
@@ -43,7 +45,7 @@ class DiscoursScrapper(scrapy.Spider):
         else:
             tags = ''
         if response.xpath('//*[@id="block-ldf-content"]/div/div[1]/div[1]/div/div/div[2]/div/div/ul/li'):
-            themes = response.xpath('//*[@id="block-ldf-content"]/div/div[1]/div[1]/div/div/div[2]/div/div/ul/li/text()').extract()
+            themes = response.xpath('//*[@id="block-ldf-content"]/div/div[1]/div[1]/div/div/div[2]/div/div/ul/li/a/text()').extract()
         else:
             themes= ''
         if titre =='':
@@ -56,17 +58,32 @@ class DiscoursScrapper(scrapy.Spider):
             except:
                 titre = ''
         if response.css('span.field--name-field-texte-integral'):
-            text = response.css('span.field--name-field-texte-integral').extract()[0]
-            para = text.split('\n')
-            para = [x + ' ' for x in para if x!='']
-            discours = []
-            for p in para:
-                if not p.startswith('Source'):
-                    discours.append(p)
-            text = ' '.join(discours)
+            if titre.split(' ')[0].lower() == 'interview':
+                text = response.xpath('//*[@id="block-ldf-content"]/div/div[1]/div[2]/div/div/span/p/text()').extract()
+                text = [word.replace('\n','').replace('\xa0','').replace('\x85','').replace('\x96','').replace('\x92',"'").replace('\x80','') for word in text]
+                text = [word for word in text if len(word) >0]
+                a = set([word.replace('\n','').split(',')[0] for word in text if word.replace('\n','').isupper()])
+                dic = {x: [[],[]] for x in a}
+                lst_intervenants = [word.replace('\n','').split(',')[0] for word in text if word.replace('\n','').isupper()]
+                lst_discours = [word for word in text if not word.replace('\n','').isupper() and not word.replace('\n','').startswith('Source')]
+                for i in range(len(lst_discours)):
+                    interv = lst_intervenants[i]
+                    dic[interv][0].append(i) 
+                    dic[interv][1].append(lst_discours[i])
+                text= dic
+            else:
+                text = response.css('span.field--name-field-texte-integral').extract()[0]
+                para = text.split('\n')
+                para = [x + ' ' for x in para if x!='']
+                discours = []
+                for p in para:
+                    if not p.startswith('Source'):
+                        discours.append(p)
+                text = ' '.join(discours)
+                text = BeautifulSoup(text,'lxml').text
+                text = text.encode("utf-8")
         else:
             text = ''
-        text = BeautifulSoup(text,'lxml').text
         unique_id  = response.request.url.split('/')[4].split('-')[0]
         yield {
             'Id':unique_id.encode("utf-8") ,
@@ -78,6 +95,6 @@ class DiscoursScrapper(scrapy.Spider):
             'Fonction':fonction.encode("utf-8") ,
             'Date':dt.encode("utf-8") ,
             'Tags':tags,
-            'Texte': text.encode("utf-8") ,
+            'Texte': text ,
             'Lien':response.request.url
         }
