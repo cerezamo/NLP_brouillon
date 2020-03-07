@@ -13,7 +13,7 @@ class DiscoursScrapper(scrapy.Spider):
                 link = 'https://www.vie-publique.fr'+link[0]
                 rq = response.follow(link,callback=self.get_discours)
                 yield rq
-        if int(response.request.url.split('=')[1]) < 2:
+        if int(response.request.url.split('=')[1]) < 11639:
             lien = 'https://www.vie-publique.fr/discours?page='+str(int(response.request.url.split('=')[1])+1)
             yield scrapy.Request(url = lien,callback=self.get_all_discours)
     def get_discours(self,response):
@@ -66,11 +66,34 @@ class DiscoursScrapper(scrapy.Spider):
                 dic = {x: [[],[]] for x in a}
                 lst_intervenants = [word.replace('\n','').split(',')[0] for word in text if word.replace('\n','').isupper()]
                 lst_discours = [word for word in text if not word.replace('\n','').isupper() and not word.replace('\n','').startswith('Source')]
-                for i in range(len(lst_discours)):
-                    interv = lst_intervenants[i]
-                    dic[interv][0].append(i) 
-                    dic[interv][1].append(lst_discours[i])
-                text= dic
+                if len(lst_intervenants) == len(lst_discours):
+                    for i in range(len(lst_discours)):
+                        interv = lst_intervenants[i]
+                        dic[interv][0].append(i) 
+                        dic[interv][1].append(lst_discours[i])
+                    text= dic
+                else:
+                    try:
+                        inter = list(a)
+                        inter = [inte.lower() for inte in inter]
+                        lst_intervenants =  [word.replace('\n','').split(',')[0].upper() for word in text if word.replace('\n','').lower() in inter or word.replace('\n','').split(',')[0].lower() in inter ]
+                        lst_discours = [word for word in text if not word.replace('\n','').isupper() and not word.replace('\n','').startswith('Source') and not word.replace('\n','').lower() in inter and not word.replace('\n','').startswith("/")]
+                        for i in range(len(lst_discours)):
+                            interv = lst_intervenants[i]
+                            dic[interv][0].append(i) 
+                            dic[interv][1].append(lst_discours[i])
+                        text= dic
+                    except:
+                        text = response.css('span.field--name-field-texte-integral').extract()[0]
+                        para = text.split('\n')
+                        para = [x + ' ' for x in para if x!='']
+                        discours = ['ERREUR SUR LITW']
+                        for p in para:
+                            if not p.startswith('Source'):
+                                discours.append(p)
+                        text = ' '.join(discours)
+                        text = BeautifulSoup(text,'lxml').text
+                        text = text.encode("utf-8")
             else:
                 text = response.css('span.field--name-field-texte-integral').extract()[0]
                 para = text.split('\n')
