@@ -191,17 +191,18 @@ def Pron_Type_Plur(x,nlp):
             plu1.append(token)
     return len(plu1)
 
-# Je moi 
-def Verb_Tens(x):
+def Verb_Tens(x,nlp):
     """
-        Fonction qui calcule le nombre de verbes selon le temps utilisé  
+      Input:
+        x : texte
+        nlp : nlp : Spacy pre entrained modele
+      Output : 
+        Nombre de verbes à 4 temps différents
     """
     present=[]
     passe=[]
     futur=[]
     imp=[]
-    import spacy
-    nlp = spacy.load('fr_core_news_md') 
     doc = nlp(x)  
     for token in doc:
         attributes = ' '.join(' '.join(token.tag_.split('|')).split('__'))
@@ -225,17 +226,24 @@ def Verb_Tens(x):
                 passe.append(token)
     return len(present), len(passe), len(futur), len(imp)
 
-def Quest(x):
+def Quest(x,nlp):
     """
-        Fonction qui calcule le type de ponctuation  ?
+      Input:
+        x : texte
+        nlp : nlp : Spacy pre entrained modele
+      Output : 
+        Nombre de '?'
     """
     doc = nlp(x) 
     quest = [w for w in doc if str(w) in ['?']]
     return len(quest)
 
-def Excl(x):
-    """
-        Fonction qui calcule le type de ponctuation  ! 
+def Excl(x,nlp):
+    """ Input:
+        x : texte
+        nlp : nlp : Spacy pre entrained modele
+      Output : 
+        Nombre de '!'
     """
     doc = nlp(x) 
     excl = [w for w in doc if str(w) in ['!']]
