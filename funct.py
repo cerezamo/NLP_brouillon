@@ -9,7 +9,7 @@ from spacy.tokenizer import Tokenizer
 import pandas as pd
 import seaborn as sns
 import matplotlib.pyplot as plt 
-
+from collections import Counter
 
 def cleanToken(x):
     """
