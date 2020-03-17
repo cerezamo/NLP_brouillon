@@ -151,41 +151,44 @@ def extraire_nb_mot(x):
     return len(tokens)
 
 def remove_source(x):
+    """
+      Input : Texte 
+      Output : Texte sans le dernier paragraphe
+    """
     x =  x[:x.find('Source:')]
     return x[:x.find('Source http')]
 
-# Je moi 
-def Pron_Type(x):
+
+def Pron_Type(x,nlp):
     """
-        Fonction pourrie mais si tu arrives à faire mieux fait !! :D Je sais que tu aimes pas les boucles
+    Input : 
+          x : Texte
+          nlp : Spacy pre entrained modele
+    Output: 
+          Nombre de pronom personnel première personne du singulier
     """
     sing1=[]
-    import spacy
-    nlp = spacy.load('fr_core_news_md')
     doc = nlp(x)  
     for token in doc:
         attributes = ' '.join(' '.join(token.tag_.split('|')).split('__'))
-        if 'PRON' in attributes:
-            if 'Number=Sing' in attributes:
-                if 'Person=1' in attributes:
-                    sing1.append(token)
+        if 'PRON' in attributes and 'Number=Sing' in attributes and 'Person=1' in attributes:
+            sing1.append(token)
     return len(sing1)
 
- # Nous
-def Pron_Type_Plur(x):
+def Pron_Type_Plur(x,nlp):
     """
-        
+    Input : 
+          x : Texte
+          nlp : Spacy pre entrained modele
+    Output: 
+          Nombre de pronom perso PLUR 1
     """
     plu1=[]
-    plu2=[]
-    plu3=[]
     doc = nlp(x)  
     for token in doc:
         attributes = ' '.join(' '.join(token.tag_.split('|')).split('__'))
-        if 'PRON' in attributes:
-            if 'Number=Plur' in attributes:
-                if 'Person=1' in attributes:
-                    plu1.append(token)
+        if 'PRON' in attributes and 'Number=Plur' in attributes and 'Person=1' in attributes:
+            plu1.append(token)
     return len(plu1)
 
 # Je moi 
