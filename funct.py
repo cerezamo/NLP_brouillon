@@ -3,6 +3,7 @@
 
 # In[ ]:
 
+from spacy.lang.fr.stop_words import STOP_WORDS as fr_stop
 
 def cleanToken(x):
     """
