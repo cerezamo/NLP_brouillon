@@ -13,6 +13,7 @@ from collections import Counter
 import spacy
 nlp = spacy.load('fr_core_news_md') 
 
+feel = pd.read_csv('FEEL.csv')
 def cleanToken(x):
     """
         Fonction permettant de nettoyer et de tokenizer un texte
@@ -267,3 +268,51 @@ def FastCleaner(x,lst):
       liste de tokens cleaner
   """
   return [word for word in x if word not in lst]
+
+def cleanTokenLemme(x,lst =[]):
+    """
+        Input : 
+          x : texte
+          lst : lst de mot a clean en plus
+        Output : 
+          tokens tout cleaned
+        Fonction permettant de nettoyer et de tokenizer un texte tout en le lemmatizant
+    """
+    import string
+    pct = string.punctuation+'...'+'\x92'+'«'+'»'+'``'+"''"+'``'
+    x = [word.lemma_ for word in nlp(x)]
+    x = ' '.join(x)
+    x =str(x)
+    x = x.replace('\xa0','').replace('\x85','').replace('\x96','')
+    x = "".join(filter(lambda y: not y.isdigit(), x))
+    sw = list(fr_stop)
+    tokens = [str(w).lower() for w in word_tokenize(x, language='french')]
+    tokens = [w for w in tokens if w not in pct]
+    tokens = [w for w in tokens if w not in sw]
+    tokens = [w for w in tokens if not len(w) <=2]
+    tokens = [w for w in tokens if w not in lst]
+    return tokens
+def check_polarity(tokens):
+    """
+        Analyse de sentiment de chaque mots
+        Input : Tokens
+        Output :  (%positive,%negative,%non trouvé) en fréquen
+    """
+    pos = feel[feel.polarity == 'positive'].word.values
+    neg = feel[feel.polarity == 'negative'].word.values
+    nb_pos = [word for word in tokens if word in pos]
+    nb_neg = [word for word in tokens if word in neg]
+    return [len(nb_pos)/len(tokens),len(nb_neg)/len(tokens),1 - (len(nb_pos) + len(nb_neg))/len(tokens)]
+def extraction_emotion(tokens):
+    """
+        Permet d'extraire le nombre de mot classé dans 6 émotions différentes.
+        Input : Tokens
+        Output : (Joie,peur,tristesse,colère,surprise,dégoût) en fréquence
+    """
+    joie = [w for w in tokens if w in feel[feel.joy == 1].word.values]
+    peur = [w for w in tokens if w in feel[feel.fear == 1].word.values]
+    tristesse = [w for w in tokens if w in feel[feel.sadness == 1].word.values]
+    colere = [w for w in tokens if w in feel[feel.anger == 1].word.values]
+    surprise = [w for w in tokens if w in feel[feel.surprise == 1].word.values]
+    degout = [w for w in tokens if w in feel[feel.disgust == 1].word.values]
+    return [len(joie)/len(tokens),len(peur)/len(tokens),len(tristesse)/len(tokens),len(colere)/len(tokens),len(surprise)/len(tokens),len(degout)/len(tokens)]
