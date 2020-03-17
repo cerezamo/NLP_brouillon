@@ -256,3 +256,12 @@ def Excl(x,nlp):
     excl = [w for w in doc if str(w) in ['!']]
     return len(excl)
 
+def FastCleaner(x,lst):
+  """
+    Input :
+      x : Tokens
+      lst : liste de mot à enlever
+    Output : 
+      liste de tokens cleaner
+  """
+  return [word for word in x if word not in lst]
