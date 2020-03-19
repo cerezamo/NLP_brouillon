@@ -11,6 +11,7 @@ import seaborn as sns
 import matplotlib.pyplot as plt 
 from collections import Counter
 import spacy
+import string
 nlp = spacy.load('fr_core_news_md') 
 
 feel = pd.read_csv('FEEL.csv')
@@ -18,7 +19,6 @@ def cleanToken(x):
     """
         Fonction permettant de nettoyer et de tokenizer un texte
     """
-    import string
     pct = string.punctuation+'...'+'\x92'+'«'+'»'+'``'+"''"+'``'
     x = x.replace('\xa0','').replace('\x85','').replace('\x96','')
     x = "".join(filter(lambda y: not y.isdigit(), x))
@@ -31,7 +31,6 @@ def count_punct(tokens):
     """
         Permet de compter la ponctuation
     """
-    import string
     pct = string.punctuation +'...'+'\x92'+'«'+'»'+'``'
     cpt = 0
     for x in tokens:
@@ -278,7 +277,6 @@ def cleanTokenLemme(x,lst =[]):
           tokens tout cleaned
         Fonction permettant de nettoyer et de tokenizer un texte tout en le lemmatizant
     """
-    import string
     pct = string.punctuation+'...'+'\x92'+'«'+'»'+'``'+"''"+'``'
     x = [word.lemma_ for word in nlp(x)]
     x = ' '.join(x)
