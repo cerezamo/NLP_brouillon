@@ -367,4 +367,37 @@ def vec_for_learning(model, tagged_docs):
     sents = tagged_docs.values
     targets, regressors = zip(*[(doc.tags[0], model.infer_vector(doc.words, steps=20)) for doc in sents])
     return targets, regressors
-
+def add_features(df):
+    from multiprocessing import Pool
+    nlp = spacy.load('fr_core_news_md') 
+    df['NbCleanToken'] = df.Texte.apply(lambda x : len(cleanToken(x)))
+    df['NbSyllables'] = df.Texte.apply(NbSyllables)
+    df['NbMot'] = df.Texte.apply(extraire_nb_mot)
+    df['Phrases'] = df.Texte.apply(sent_detector_mano)
+    df['NbPhrases'] = df.Texte.apply(lambda x:len(sent_detector_mano(x)))
+    df['CleanToken'] = df.Texte.apply(cleanToken)
+    df.CleanToken = df.apply(lambda row : FastCleaner(row.CleanToken,cleanFast),axis=1)
+    df['NbCleanToken']=df.CleanToken.apply(len)
+    df['NbPonct'] = df.Texte.apply(count_punct)
+    df['NbSw'] = df.Token.apply(count_stopwords)
+    df['Hapaxlegomena']=df.CleanToken.apply(Hapaxlegomena)
+    df['Hapaxdislegomena']= df.CleanToken.apply(Hapaxdislegomena)
+    df['UniqueWordTx']= df.CleanToken.apply(lambda x:len(set(x))/len(x))
+    #df['RateCleanRaw'] = df.NbCleanToken/df.NbToken
+    df['NbNom'],df['NbDet'],df['NbPunct'],df['NbAdj'],df['NbAdp'],df['NbPron'],df['NbVerb'],df['NbCconj'],df['NbNum'],df['NbPropn'],df['NbAdv'],df['NbSCONJ'],df['NbAUX'],df['NbIntj']=zip(*df.Texte.apply(extractPos))
+    df['NbArt']= df.Texte.apply(nbArt)
+    df['F_mesure'] = df.apply(lambda row: f_mesure(row.NbToken,row.NbNom,row.NbAdj,row.NbAdp,row.NbArt,row.NbPron,row.NbVerb,row.NbAdv,row.NbIntj),axis=1)
+    df['PronJe']=df.apply(lambda row : Pron_Type(row.Texte,nlp),axis=1)
+    df['PronNous']=df.apply(lambda row : Pron_Type_Plur(row.Texte,nlp),axis=1)
+    df['NbPres'],df['NbPast'],df['NbFut'],df['NbImp']  = zip(*df.apply(lambda row : Verb_Tens(row.Texte,nlp),axis=1))
+    df['NbQuest']= df.apply(lambda row : Quest(row.Texte,nlp),axis=1)
+    df['NbExcl']= df.apply(lambda row  : Excl(row.Texte,nlp),axis=1)
+    return df
+def para_df(df,func,n_cores = mp.cpu_count()):
+    from multiprocessing import Pool
+    df_split = np.array_split(df,n_cores)
+    pool = Pool(n_cores)
+    df = pd.concat(pool.map(func,df_split))
+    pool.close()
+    pool.join()
+    return df
