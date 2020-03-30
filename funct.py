@@ -363,4 +363,8 @@ def model_report(model,X_train,X_test,y_train,y_test) :
                     "Area_under_curve": [roc_auc],
                     })
   return df
+def vec_for_learning(model, tagged_docs):
+    sents = tagged_docs.values
+    targets, regressors = zip(*[(doc.tags[0], model.infer_vector(doc.words, steps=20)) for doc in sents])
+    return targets, regressors
 
