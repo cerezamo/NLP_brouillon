@@ -401,3 +401,13 @@ def para_df(df,func,n_cores = mp.cpu_count()):
     pool.close()
     pool.join()
     return df
+def add_features2(df):
+    """
+    Sert pour la parallélisation
+    Input : DataFrame
+    Output : DataFrame avec les nouvelles colonnes crée
+  """
+    df['CleanTokensLemme'] = df.apply(lambda row : cleanTokenLemme(row.Texte,cleanFast),axis=1)
+    df['PolPos'],df['PolNeg'],df['PolUnk'] = zip(*df.CleanTokensLemme.apply(check_polarity))
+    df['FreqJoie'],df['FreqPeur'],df['FreqSad'],df['FreqColere'],df['FreqSurprise'],df['FreqDegout'] = zip(*df.CleanTokensLemme.apply(extraction_emotion))
+    return df
