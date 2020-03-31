@@ -2,7 +2,7 @@
 # coding: utf-8
 
 # In[ ]:
-
+import multiprocessing as mp
 from spacy.lang.fr.stop_words import STOP_WORDS as fr_stop
 from nltk.tokenize import word_tokenize
 from spacy.tokenizer import Tokenizer
@@ -12,6 +12,16 @@ import matplotlib.pyplot as plt
 from collections import Counter
 import spacy
 import string
+from sklearn.metrics import (
+    recall_score,
+    accuracy_score,
+    precision_score,
+    roc_auc_score,
+    f1_score,
+    classification_report,
+    confusion_matrix,
+    roc_curve,
+    scorer)
 nlp = spacy.load('fr_core_news_md') 
 
 feel = pd.read_csv('FEEL.csv')
@@ -314,3 +324,100 @@ def extraction_emotion(tokens):
     surprise = [w for w in tokens if w in feel[feel.surprise == 1].word.values]
     degout = [w for w in tokens if w in feel[feel.disgust == 1].word.values]
     return [len(joie)/len(tokens),len(peur)/len(tokens),len(tristesse)/len(tokens),len(colere)/len(tokens),len(surprise)/len(tokens),len(degout)/len(tokens)]
+def predictions(model,X_train,X_test,y_train,y_test):
+    """
+        Input :
+            model : Algorithme de sklearn avec les paramètres choisit ou par défaut
+            X_train,X_test,y_train,y_test : dataset découpé à l'aide de train_test_split
+        Output : 
+            Classification_report + Confusion_matrix + ROC_curve + (si possible feature importance)
+    """
+    model.fit(X_train,y_train)
+    pred = model.predict(X_test)
+    pred_prob = model.predict_proba(X_test)
+    print(model)
+    print ("Classification report :",classification_report(y_test,pred))
+    print ("Accuracy : ",accuracy_score(y_test,pred))
+    cm = confusion_matrix(y_test,pred)
+    ROC = roc_auc_score(y_test,pred) 
+    print ("AUC : ",ROC)
+    fpr,tpr,thresholds = roc_curve(y_test,pred_prob[:,1])
+    plt.figure(figsize=(12,10))
+    plt.subplot(221)
+    sns.heatmap(cm/np.sum(cm), annot=True, 
+            fmt='.2%', cmap='Blues').set_title('Matrice de confusion')
+    plt.subplot(222)
+    plt.plot(fpr, tpr, 'b', label = 'AUC = %0.2f' % ROC)
+    plt.plot([0,1],[0,1],color='red')
+    plt.title('Courbe ROC')
+    plt.show()
+def model_report(model,X_train,X_test,y_train,y_test) :
+  """
+      Input : 
+          model : Algorithme de sklearn
+          X_train,X_test,y_train,y_test : dataset découpé à l'aide de train_test_split
+      Output : 
+          DataFrame avec AccScore,RecallScore,Precision,F1+auc
+  """
+  model.fit(X_train,y_train)
+  predictions  = model.predict(X_test)
+  accuracy     = accuracy_score(y_test,predictions)
+  recallscore  = recall_score(y_test,predictions)
+  precision    = precision_score(y_test,predictions)
+  roc_auc      = roc_auc_score(y_test,predictions)
+  f1score      = f1_score(y_test,predictions)     
+  df = pd.DataFrame({ "Accuracy_score"  : [accuracy],
+                    "Recall_score"    : [recallscore],
+                    "Precision"       : [precision],
+                    "f1_score"        : [f1score],
+                    "Area_under_curve": [roc_auc],
+                    })
+  return df
+def vec_for_learning(model, tagged_docs):
+    sents = tagged_docs.values
+    targets, regressors = zip(*[(doc.tags[0], model.infer_vector(doc.words, steps=20)) for doc in sents])
+    return targets, regressors
+def add_features(df):
+    from multiprocessing import Pool
+    nlp = spacy.load('fr_core_news_md') 
+    df['NbCleanToken'] = df.Texte.apply(lambda x : len(cleanToken(x)))
+    df['NbSyllables'] = df.Texte.apply(NbSyllables)
+    df['NbMot'] = df.Texte.apply(extraire_nb_mot)
+    df['Phrases'] = df.Texte.apply(sent_detector_mano)
+    df['NbPhrases'] = df.Texte.apply(lambda x:len(sent_detector_mano(x)))
+    df['CleanToken'] = df.Texte.apply(cleanToken)
+    df.CleanToken = df.apply(lambda row : FastCleaner(row.CleanToken,cleanFast),axis=1)
+    df['NbCleanToken']=df.CleanToken.apply(len)
+    df['NbPonct'] = df.Texte.apply(count_punct)
+    df['NbSw'] = df.Token.apply(count_stopwords)
+    df['Hapaxlegomena']=df.CleanToken.apply(Hapaxlegomena)
+    df['Hapaxdislegomena']= df.CleanToken.apply(Hapaxdislegomena)
+    df['UniqueWordTx']= df.CleanToken.apply(lambda x:len(set(x))/len(x))
+    #df['RateCleanRaw'] = df.NbCleanToken/df.NbToken
+    df['NbNom'],df['NbDet'],df['NbPunct'],df['NbAdj'],df['NbAdp'],df['NbPron'],df['NbVerb'],df['NbCconj'],df['NbNum'],df['NbPropn'],df['NbAdv'],df['NbSCONJ'],df['NbAUX'],df['NbIntj']=zip(*df.Texte.apply(extractPos))
+    df['NbArt']= df.Texte.apply(nbArt)
+    df['F_mesure'] = df.apply(lambda row: f_mesure(row.NbToken,row.NbNom,row.NbAdj,row.NbAdp,row.NbArt,row.NbPron,row.NbVerb,row.NbAdv,row.NbIntj),axis=1)
+    df['PronJe']=df.apply(lambda row : Pron_Type(row.Texte,nlp),axis=1)
+    df['PronNous']=df.apply(lambda row : Pron_Type_Plur(row.Texte,nlp),axis=1)
+    df['NbPres'],df['NbPast'],df['NbFut'],df['NbImp']  = zip(*df.apply(lambda row : Verb_Tens(row.Texte,nlp),axis=1))
+    df['NbQuest']= df.apply(lambda row : Quest(row.Texte,nlp),axis=1)
+    df['NbExcl']= df.apply(lambda row  : Excl(row.Texte,nlp),axis=1)
+    return df
+def para_df(df,func,n_cores = mp.cpu_count()):
+    from multiprocessing import Pool
+    df_split = np.array_split(df,n_cores)
+    pool = Pool(n_cores)
+    df = pd.concat(pool.map(func,df_split))
+    pool.close()
+    pool.join()
+    return df
+def add_features2(df):
+    """
+    Sert pour la parallélisation
+    Input : DataFrame
+    Output : DataFrame avec les nouvelles colonnes crée
+  """
+    df['CleanTokensLemme'] = df.apply(lambda row : cleanTokenLemme(row.Texte,cleanFast),axis=1)
+    df['PolPos'],df['PolNeg'],df['PolUnk'] = zip(*df.CleanTokensLemme.apply(check_polarity))
+    df['FreqJoie'],df['FreqPeur'],df['FreqSad'],df['FreqColere'],df['FreqSurprise'],df['FreqDegout'] = zip(*df.CleanTokensLemme.apply(extraction_emotion))
+    return df
