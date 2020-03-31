@@ -2,7 +2,7 @@
 # coding: utf-8
 
 # In[ ]:
-
+import multiprocessing as mp
 from spacy.lang.fr.stop_words import STOP_WORDS as fr_stop
 from nltk.tokenize import word_tokenize
 from spacy.tokenizer import Tokenizer
@@ -12,6 +12,16 @@ import matplotlib.pyplot as plt
 from collections import Counter
 import spacy
 import string
+from sklearn.metrics import (
+    recall_score,
+    accuracy_score,
+    precision_score,
+    roc_auc_score,
+    f1_score,
+    classification_report,
+    confusion_matrix,
+    roc_curve,
+    scorer)
 nlp = spacy.load('fr_core_news_md') 
 
 feel = pd.read_csv('FEEL.csv')
