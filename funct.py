@@ -2,7 +2,7 @@
 # coding: utf-8
 
 # In[ ]:
-
+import multiprocessing as mp
 from spacy.lang.fr.stop_words import STOP_WORDS as fr_stop
 from nltk.tokenize import word_tokenize
 from spacy.tokenizer import Tokenizer
