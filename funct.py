@@ -477,3 +477,69 @@ def plot_tfidf_classfeats_h(dfs):
         plt.subplots_adjust(bottom=0.09, right=0.97, left=0.15, top=0.95, wspace=0.52)
         j+=1
     plt.show()
+
+
+    
+
+def sent_detector_mano(x):
+    """
+        Détection de phrase à la main.
+        Input : document
+        Output : liste de phrases
+        Problème avec les phrases finissant par : entrainant souvent une liste. 
+        De même avec ;. Tentative réalisée
+        
+    """
+    import pandas as pd
+    lst =[]
+    phrase = []
+    i = 0
+    for caractere in x: 
+        if not (caractere == ' ' and len(phrase) == 0) :
+            phrase.append(caractere)
+        if caractere in '?!.:;':
+            if caractere == ':':
+                if x[i+1].isupper() or x[i+2].isupper() or x[i+1] == '-' or x[i+2] == '-':
+                    lst.append(''.join(phrase))
+                    phrase = []
+            elif caractere == ';':
+                if x[i+1].isupper() or x[i+2].isupper() or x[i+1] == '-' or x[i+2] == '-':
+                    lst.append(''.join(phrase))
+                    phrase = []
+            elif phrase != '.' or phrase != '?' or phrase != '!':
+                lst.append(''.join(phrase))
+                phrase = []
+        i+=1
+    return lst
+def split_document_to_limit(MAX_TOKENS,df):
+  import pandas as pd
+  lst= []
+  for index,row in df.iterrows():
+    identifiant = row.Id
+    label = row.sexe
+    phrase = []
+    for token in row.Texte.split(' '):
+      if len(phrase) < MAX_TOKENS:
+        phrase.append(token)
+      else:
+        lst += [(identifiant,label,' '.join(phrase),len(phrase))]
+        phrase = []
+    if len(phrase)>1:
+      lst += [(identifiant,label,' '.join(phrase),len(phrase))]
+  return pd.DataFrame(lst,columns=['Id','Label','Texte','Length'])
+def split_document_to_limit_phrases(MAX_TOKENS,df):
+    import pandas as pd
+    lst= []
+    for index,row in df.iterrows():
+        identifiant = row.Id
+        label = row.sexe
+        phrase = ''
+    for phrases in sent_detector_mano(row.Texte):
+        if len(phrase.split(' ')) + len(phrases.split(' ')) < MAX_TOKENS:
+            phrase+= " " + phrases
+        else:
+        lst += [(identifiant,label,phrase,len(phrase.split(' ')))]
+        phrase = ''
+    lst += [(identifiant,label,phrase,len(phrase.split(' ')))]
+    phrase = ''
+  return pd.DataFrame(lst,columns=['Id','Label','Texte','Length'])
