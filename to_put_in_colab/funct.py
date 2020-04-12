@@ -24,7 +24,8 @@ from sklearn.metrics import (
     scorer)
 nlp = spacy.load('fr_core_news_md') 
 
-feel = pd.read_csv('FEEL.csv')
+feel = pd.read_csv('https://raw.githubusercontent.com/cerezamo/NLP_project_MHMP/master/to_put_in_colab/FEEL.csv',sep=';')
+feel.set_index('id',inplace=True)
 def cleanToken(x):
     """
         Fonction permettant de nettoyer et de tokenizer un texte
