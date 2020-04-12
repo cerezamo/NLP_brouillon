@@ -7,6 +7,7 @@ from spacy.lang.fr.stop_words import STOP_WORDS as fr_stop
 from nltk.tokenize import word_tokenize
 from spacy.tokenizer import Tokenizer
 import pandas as pd
+import numpy as np
 import seaborn as sns
 import matplotlib.pyplot as plt 
 from collections import Counter
