@@ -501,9 +501,12 @@ def sent_detector_mano(x):
             phrase.append(caractere)
         if caractere in '?!.:;':
             if caractere == ':':
-                if x[i+1].isupper() or x[i+2].isupper() or x[i+1] == '-' or x[i+2] == '-':
-                    lst.append(''.join(phrase))
-                    phrase = []
+                try:
+                    if x[i+1].isupper() or x[i+2].isupper() or x[i+1] == '-' or x[i+2] == '-':
+                        lst.append(''.join(phrase))
+                        phrase = []
+                except:
+                    print('bug in ',x)
             elif caractere == ';':
                 if x[i+1].isupper() or x[i+2].isupper() or x[i+1] == '-' or x[i+2] == '-':
                     lst.append(''.join(phrase))
