@@ -7,6 +7,7 @@ from spacy.lang.fr.stop_words import STOP_WORDS as fr_stop
 from nltk.tokenize import word_tokenize
 from spacy.tokenizer import Tokenizer
 import pandas as pd
+import numpy as np
 import seaborn as sns
 import matplotlib.pyplot as plt 
 from collections import Counter
@@ -500,9 +501,12 @@ def sent_detector_mano(x):
             phrase.append(caractere)
         if caractere in '?!.:;':
             if caractere == ':':
-                if x[i+1].isupper() or x[i+2].isupper() or x[i+1] == '-' or x[i+2] == '-':
-                    lst.append(''.join(phrase))
-                    phrase = []
+                try:
+                    if x[i+1].isupper() or x[i+2].isupper() or x[i+1] == '-' or x[i+2] == '-':
+                        lst.append(''.join(phrase))
+                        phrase = []
+                except:
+                    print('bug in ',x)
             elif caractere == ';':
                 if x[i+1].isupper() or x[i+2].isupper() or x[i+1] == '-' or x[i+2] == '-':
                     lst.append(''.join(phrase))
@@ -529,18 +533,19 @@ def split_document_to_limit(MAX_TOKENS,df):
       lst += [(identifiant,label,' '.join(phrase),len(phrase))]
   return pd.DataFrame(lst,columns=['Id','Label','Texte','Length'])
 def split_document_to_limit_phrases(MAX_TOKENS,df):
-    import pandas as pd
-    lst= []
-    for index,row in df.iterrows():
-        identifiant = row.Id
-        label = row.sexe
-        phrase = ''
-    for phrases in sent_detector_mano(row.Texte):
-        if len(phrase.split(' ')) + len(phrases.split(' ')) < MAX_TOKENS:
-            phrase+= " " + phrases
-        else:
-        lst += [(identifiant,label,phrase,len(phrase.split(' ')))]
-        phrase = ''
+  import pandas as pd
+  lst= []
+  for index,row in df.iterrows():
+    identifiant = row.Id
+    label = row.sexe
+    phrase = ''
+  for phrases in sent_detector_mano(row.Texte):
+    if len(phrase.split(' ')) + len(phrases.split(' ')) < MAX_TOKENS:
+        phrase+= " " + phrases
+    else:
+      lst += [(identifiant,label,phrase,len(phrase.split(' ')))]
+      phrase = ''
     lst += [(identifiant,label,phrase,len(phrase.split(' ')))]
     phrase = ''
   return pd.DataFrame(lst,columns=['Id','Label','Texte','Length'])
+
