@@ -539,8 +539,8 @@ def split_document_to_limit_phrases(MAX_TOKENS,df):
     if len(phrase.split(' ')) + len(phrases.split(' ')) < MAX_TOKENS:
         phrase+= " " + phrases
     else:
+      lst += [(identifiant,label,phrase,len(phrase.split(' ')))]
+      phrase = ''
     lst += [(identifiant,label,phrase,len(phrase.split(' ')))]
     phrase = ''
-  lst += [(identifiant,label,phrase,len(phrase.split(' ')))]
-  phrase = ''
   return pd.DataFrame(lst,columns=['Id','Label','Texte','Length'])
