@@ -529,18 +529,18 @@ def split_document_to_limit(MAX_TOKENS,df):
       lst += [(identifiant,label,' '.join(phrase),len(phrase))]
   return pd.DataFrame(lst,columns=['Id','Label','Texte','Length'])
 def split_document_to_limit_phrases(MAX_TOKENS,df):
-    import pandas as pd
-    lst= []
-    for index,row in df.iterrows():
-        identifiant = row.Id
-        label = row.sexe
-        phrase = ''
-    for phrases in sent_detector_mano(row.Texte):
-        if len(phrase.split(' ')) + len(phrases.split(' ')) < MAX_TOKENS:
-            phrase+= " " + phrases
-        else:
-        lst += [(identifiant,label,phrase,len(phrase.split(' ')))]
-        phrase = ''
-    lst += [(identifiant,label,phrase,len(phrase.split(' ')))]
-    phrase = ''
+  import pandas as pd
+  lst= []
+  for index,row in df.iterrows():
+      identifiant = row.Id
+      label = row.sexe
+      phrase = ''
+  for phrases in sent_detector_mano(row.Texte):
+      if len(phrase.split(' ')) + len(phrases.split(' ')) < MAX_TOKENS:
+          phrase+= " " + phrases
+      else:
+      lst += [(identifiant,label,phrase,len(phrase.split(' ')))]
+      phrase = ''
+  lst += [(identifiant,label,phrase,len(phrase.split(' ')))]
+  phrase = ''
   return pd.DataFrame(lst,columns=['Id','Label','Texte','Length'])
